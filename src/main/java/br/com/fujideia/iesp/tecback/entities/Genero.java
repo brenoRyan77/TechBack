@@ -1,5 +1,7 @@
 package br.com.fujideia.iesp.tecback.entities;
 
+import java.io.Serializable;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,9 +14,11 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "tb_genero")
-public class Genero {
+public class Genero implements Serializable{
 
-    @Id
+	private static final long serialVersionUID = 1L;
+	
+	@Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private String descircao;

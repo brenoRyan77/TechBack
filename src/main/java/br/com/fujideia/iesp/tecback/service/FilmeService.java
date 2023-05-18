@@ -11,12 +11,10 @@ import br.com.fujideia.iesp.tecback.dto.FilmeDTO;
 import br.com.fujideia.iesp.tecback.dto.GeneroDTO;
 import br.com.fujideia.iesp.tecback.entities.Filme;
 import br.com.fujideia.iesp.tecback.entities.Genero;
+import br.com.fujideia.iesp.tecback.exception.ApplicationServiceException;
 import br.com.fujideia.iesp.tecback.repository.FilmeRepository;
 import br.com.fujideia.iesp.tecback.repository.GeneroRepository;
-import jakarta.ws.rs.NotFoundException;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Service
 public class FilmeService {
 	
@@ -26,27 +24,29 @@ public class FilmeService {
     @Autowired
     private GeneroRepository generoRepository;
 
-    public FilmeDTO salvar(FilmeDTO filmeDTO){
+    public void salvar(FilmeDTO filmeDTO) throws ApplicationServiceException{
     	
-    	Filme filme = new Filme();
-    	
-    	Genero genero = new Genero();
-    	
-    	GeneroDTO generoDTO = filmeDTO.getGenero();
-    	genero.setDescircao(generoDTO.getDescricao());
-    	
-    	filme.setGenero(genero);
-    	filme.setSinopse(filmeDTO.getSinopse());
-    	filme.setTitulo(filmeDTO.getTitulo());
-    	
-    	generoRepository.save(genero);
-    	
-    	repository.save(filme);
-       
-    	return filmeDTO;
+    	try {
+            Filme filme = new Filme();
+
+            Genero genero = new Genero();
+            GeneroDTO generoDTO = filmeDTO.getGenero();
+            genero.setDescircao(generoDTO.getDescricao());
+
+            filme.setGenero(genero);
+            filme.setSinopse(filmeDTO.getSinopse());
+            filme.setTitulo(filmeDTO.getTitulo());
+
+            generoRepository.save(genero);
+
+            repository.save(filme);
+
+        } catch (Exception e) {
+            throw new ApplicationServiceException("message.erro.salvar");
+        }
     }
 
-    public Filme alterar(Integer id, FilmeDTO filmeDTO){
+    public void alterar(Integer id, FilmeDTO filmeDTO) throws ApplicationServiceException{
     	
 		Optional<Filme> optionalFilme = repository.findById(id);
 
@@ -54,7 +54,8 @@ public class FilmeService {
 			
 			Filme filme = optionalFilme.get();
 			Genero genero = generoRepository.findById(filme.getGenero().getId())
-					.orElseThrow(() -> new IllegalArgumentException("Gênero não encontrado"));
+					.orElseThrow(() -> new 
+							ApplicationServiceException("message.erro.genero.inex"));
 
 			filme.setSinopse(filmeDTO.getSinopse());
 			filme.setTitulo(filmeDTO.getTitulo());
@@ -66,10 +67,9 @@ public class FilmeService {
 
 			generoRepository.save(genero);
 			repository.save(filme);
-			return filme;
         	
     	}else {
-    		throw new IllegalArgumentException("Filme não encontrado");
+    		throw new ApplicationServiceException("message.erro.filme.inex");
     	}
     }
 
@@ -77,21 +77,30 @@ public class FilmeService {
         return repository.findAll();
     }
 
-    public Boolean excluir(Integer id){
-        try {
-            repository.deleteById(id);
-        }catch (Exception e ){
-            log.info("Erro ao realizar Exclusão : {}", e);
-            return false;
+    public void excluir(Integer id) throws ApplicationServiceException{
+        
+		Filme filme = repository.findById(id).get();
 
-        }
-        return true;
+		if (filme != null) {
+			repository.deleteById(filme.getId());
+
+		} else {
+			throw new ApplicationServiceException("message.erro.filme.inex");
+		}
+   
     }
 
-    public Filme consultarPorId(Integer id){
-        return repository
-                .findById(id)
-                .orElseThrow(NotFoundException::new);
+    public Filme consultarPorId(Integer id) throws ApplicationServiceException{
+        
+    	Filme filme = repository.findById(id).get();
+    	
+    	if(filme != null) {
+    		return filme;
+    	}else {
+    		
+    		throw new ApplicationServiceException("message.erro.filme.inex");
+    	}
+    	
     }
 
 }
