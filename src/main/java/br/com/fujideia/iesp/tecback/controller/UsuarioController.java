@@ -3,6 +3,8 @@ package br.com.fujideia.iesp.tecback.controller;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import br.com.fujideia.iesp.tecback.dto.EntityErrorDTO;
+import br.com.fujideia.iesp.tecback.exception.ApplicationServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.data.crossstore.ChangeSetPersister;
@@ -74,11 +76,15 @@ public class UsuarioController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Boolean> excluir (@PathVariable("id") Long id) {
-        if (service.excluir(id)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.notFound().build();
+    public  ResponseEntity<?> excluir (@PathVariable("id") Long id) {
+
+        try {
+            service.excluir(id);
+            return ResponseEntity.noContent().build();
+        }catch (ApplicationServiceException e) {
+            return EntityErrorDTO.createFromException(e.getMessage())
+                    .withStatusCode(HttpStatus.BAD_REQUEST);
         }
+
     }
 }

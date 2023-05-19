@@ -3,6 +3,7 @@ package br.com.fujideia.iesp.tecback.service;
 import java.util.List;
 import java.util.Optional;
 
+import br.com.fujideia.iesp.tecback.exception.ApplicationServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,39 +33,43 @@ public class UsuarioService {
 
     public UsuarioDTO salvar(UsuarioDTO user) throws Exception {
 
-        Usuario usuario = new Usuario();
-        String senha = criptografarSenha(user.getSenha());
+        try {
+            Usuario usuario = new Usuario();
+            String senha = criptografarSenha(user.getSenha());
 
-        if (StringUtils.isNotBlank(senha)) {
-            usuario.setSenha(senha);
+            if (StringUtils.isNotBlank(senha)) {
+                usuario.setSenha(senha);
+            }
+            usuario.setNomeCompleto(user.getNomeCompleto());
+            usuario.setEmail(user.getEmail());
+            usuario.setDataNasc(user.getDataNasc());
+
+            CartaoDTO cartaoDTO = user.getCartao();
+
+            Cartao cartao = new Cartao();
+            cartao.setCodSeguranca(cartaoDTO.getCodSeguranca());
+
+            String cpfSemMascara = UtilidadesDesenvolvimento.retiraCpf(cartaoDTO.getCpf());
+            boolean cpfValido = CpfRgUtil.validaCPF(cpfSemMascara);
+
+            if (cpfValido) {
+                cartao.setCpf(cpfSemMascara);
+            } else {
+                throw new ApplicationServiceException("message.erro.usuario.cpf");
+            }
+            cartao.setNumCartao(cartaoDTO.getNumCartao());
+            cartao.setTitularNome(cartaoDTO.getTitularNome());
+            cartao.setValidadeCartao(cartaoDTO.getValidadeCartao());
+
+            usuario.setDadosCartao(cartao);
+
+            cartaoRepository.save(cartao);
+            repository.save(usuario);
+
+            return user;
+        } catch (Exception e) {
+            throw new ApplicationServiceException("message.erro.usuario.salvar");
         }
-        usuario.setNomeCompleto(user.getNomeCompleto());
-        usuario.setEmail(user.getEmail());
-        usuario.setDataNasc(user.getDataNasc());
-
-        CartaoDTO cartaoDTO = user.getCartao();
-
-        Cartao cartao = new Cartao();
-        cartao.setCodSeguranca(cartaoDTO.getCodSeguranca());
-        
-        String cpfSemMascara = UtilidadesDesenvolvimento.retiraCpf(cartaoDTO.getCpf());
-        boolean cpfValido = CpfRgUtil.validaCPF(cpfSemMascara);
-        
-        if(cpfValido) {
-        	cartao.setCpf(cpfSemMascara);
-        }else {
-        	throw new IllegalArgumentException("Digite um CPF válido");
-        }
-        cartao.setNumCartao(cartaoDTO.getNumCartao());
-        cartao.setTitularNome(cartaoDTO.getTitularNome());
-        cartao.setValidadeCartao(cartaoDTO.getValidadeCartao());
-
-        usuario.setDadosCartao(cartao);
-
-        cartaoRepository.save(cartao);
-        repository.save(usuario);
-
-        return user;
     }
     public void alterar(UsuarioDTO user, Long id) throws Exception {
 
@@ -80,25 +85,24 @@ public class UsuarioService {
             repository.save(usuario);
 
         }else{
-            throw new MethodNotFoundException();
+            throw new ApplicationServiceException("message.erro.usuario.alterar");
         }
 
     }
     public List<Usuario> listar() {
         return repository.findAll();
     }
-    public Boolean excluir(Long id){
+    public void excluir(Long id) throws ApplicationServiceException{
 
-        try {
             Optional<Usuario> op = repository.findById(id);
+
             if(!op.isEmpty()){
                 repository.deleteById(id);
+            }else {
+                throw new ApplicationServiceException("message.erro.usuario.excluir");
             }
-        }catch (Exception e){
-            log.info("Erro ao realizar exclusao", e.getMessage());
-            return false;
-        }
-        return true;
+
+
     }
     public Usuario consultarPorId(Long id) throws ChangeSetPersister.NotFoundException {
         return repository.findById(id).orElseThrow(ChangeSetPersister.NotFoundException::new);
