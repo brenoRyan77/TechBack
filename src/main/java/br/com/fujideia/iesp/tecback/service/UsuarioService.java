@@ -40,47 +40,46 @@ public class UsuarioService {
     @Value("${spring.mail.username}")
     private String emailDefault;
 
-    public UsuarioDTO salvar(UsuarioDTO user) throws Exception {
+	public UsuarioDTO salvar(UsuarioDTO user) throws Exception {
 
-        try {
-            Usuario usuario = new Usuario();
-            String senha = criptografarSenha(user.getSenha());
+		try {
+			Usuario usuario = new Usuario();
+			String senha = criptografarSenha(user.getSenha());
 
-        if (StringUtils.isNotBlank(senha)) {
-            usuario.setSenha(senha);
-        }
-        usuario.setNomeCompleto(user.getNomeCompleto());
-        usuario.setEmail(user.getEmail());
-        usuario.setDataNasc(user.getDataNasc());
+			if (StringUtils.isNotBlank(senha)) {
+				usuario.setSenha(senha);
+			}
+			usuario.setNomeCompleto(user.getNomeCompleto());
+			usuario.setEmail(user.getEmail());
+			usuario.setDataNasc(user.getDataNasc());
 
-        CartaoDTO cartaoDTO = user.getCartao();
+			CartaoDTO cartaoDTO = user.getCartao();
 
-        Cartao cartao = new Cartao();
-        cartao.setCodSeguranca(cartaoDTO.getCodSeguranca());
-        
-        String cpfSemMascara = UtilidadesDesenvolvimento.retiraCpf(cartaoDTO.getCpf());
-        boolean cpfValido = CpfRgUtil.validaCPF(cpfSemMascara);
-        
-        if(cpfValido) {
-        	cartao.setCpf(cpfSemMascara);
-        }else {
-        	throw new ApplicationServiceException("Digite um CPF válido");
-        }
-        cartao.setNumCartao(cartaoDTO.getNumCartao());
-        cartao.setTitularNome(cartaoDTO.getTitularNome());
-        cartao.setValidadeCartao(cartaoDTO.getValidadeCartao());
+			Cartao cartao = new Cartao();
+			cartao.setCodSeguranca(cartaoDTO.getCodSeguranca());
 
-        cartaoRepository.save(cartao);
-        repository.save(usuario);
-        
-        enviarEmail(usuario);
+			String cpfSemMascara = UtilidadesDesenvolvimento.retiraCpf(cartaoDTO.getCpf());
+			boolean cpfValido = CpfRgUtil.validaCPF(cpfSemMascara);
 
+			if (cpfValido) {
+				cartao.setCpf(cpfSemMascara);
+			} else {
+				throw new ApplicationServiceException("Digite um CPF válido");
+			}
+			cartao.setNumCartao(cartaoDTO.getNumCartao());
+			cartao.setTitularNome(cartaoDTO.getTitularNome());
+			cartao.setValidadeCartao(cartaoDTO.getValidadeCartao());
 
-            return user;
-        } catch (Exception e) {
-            throw new ApplicationServiceException("message.erro.usuario.salvar");
-        }
-    }
+			cartaoRepository.save(cartao);
+			repository.save(usuario);
+
+			enviarEmail(usuario);
+
+			return user;
+		} catch (Exception e) {
+			throw new ApplicationServiceException("message.erro.usuario.salvar");
+		}
+	}
     
     public void alterar(UsuarioDTO user, Long id) throws ApplicationServiceException {
 
@@ -134,38 +133,36 @@ public class UsuarioService {
 
     }
     
-    public void enviarEmail(Usuario user) throws ApplicationServiceException {
-    	
-    	try {
-    		
-            EmailDTO emailDTO = new EmailDTO();
-            StringBuilder corpoEmail = new StringBuilder();
-            
-            Email emailModel = new Email();
-            BeanUtils.copyProperties(emailDTO, emailModel);
+	public void enviarEmail(Usuario user) throws ApplicationServiceException {
 
-            corpoEmail.append("Prezado(a) ").append(user.getNomeCompleto()).append(",\n\n");
-            corpoEmail.append("Gostaríamos de informar que seu cadastro foi"
-            		+ " realizado com sucesso. É um prazer tê-lo(a) como parte de nossa comunidade.\n\n");
-            corpoEmail.append("Em caso de dúvidas ou necessidade de suporte,"
-            		+ " não hesite em entrar em contato conosco. Estamos sempre prontos para ajudar.\n\n");
-            corpoEmail.append("Agradecemos por escolher nossos serviços e"
-            		+ " esperamos proporcionar uma experiência satisfatória"
-            		+ " em todas as interações.\n\n");
-            corpoEmail.append("Atenciosamente,\n");
-            corpoEmail.append("Equipe TeckBack.");
+		try {
 
+			EmailDTO emailDTO = new EmailDTO();
+			StringBuilder corpoEmail = new StringBuilder();
 
-            emailModel.setSubject("Cadastro TeckBack - UNIESP");
-            emailModel.setEmailTo(user.getEmail());
-            emailModel.setEmailFrom(emailDefault);
-            emailModel.setOwnerRef(user.getId().toString() + " - " + user.getNomeCompleto());
-            emailModel.setText(corpoEmail.toString());
-            
-            emailService.sendEmail(emailModel);
-           
-        } catch (Exception e) {
-        	throw new ApplicationServiceException("message.erro.envio.email");
-        }
-    }
+			Email emailModel = new Email();
+			BeanUtils.copyProperties(emailDTO, emailModel);
+
+			corpoEmail.append("Prezado(a) ").append(user.getNomeCompleto()).append(",\n\n");
+			corpoEmail.append("Gostaríamos de informar que seu cadastro foi"
+					+ " realizado com sucesso. É um prazer tê-lo(a) como parte de nossa comunidade.\n\n");
+			corpoEmail.append("Em caso de dúvidas ou necessidade de suporte,"
+					+ " não hesite em entrar em contato conosco. Estamos sempre prontos para ajudar.\n\n");
+			corpoEmail.append("Agradecemos por escolher nossos serviços e"
+					+ " esperamos proporcionar uma experiência satisfatória" + " em todas as interações.\n\n");
+			corpoEmail.append("Atenciosamente,\n");
+			corpoEmail.append("Equipe TeckBack.");
+
+			emailModel.setSubject("Cadastro TeckBack - UNIESP");
+			emailModel.setEmailTo(user.getEmail());
+			emailModel.setEmailFrom(emailDefault);
+			emailModel.setOwnerRef(user.getId().toString() + " - " + user.getNomeCompleto());
+			emailModel.setText(corpoEmail.toString());
+
+			emailService.sendEmail(emailModel);
+
+		} catch (Exception e) {
+			throw new ApplicationServiceException("message.erro.envio.email");
+		}
+	}
 }
