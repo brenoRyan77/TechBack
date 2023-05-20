@@ -14,7 +14,7 @@ public class UsuarioDTO {
     private String nomeCompleto;
 	
 	@NotBlank(message = "A data de nascimento é obrigatório.")
-	@Size(min = 7, max = 8, message = "A data de nascimento deve ser mandado no formado dd/MM/yyyy.")
+//	@Size(min = 7, max = 8, message = "A data de nascimento deve ser mandado no formado dd/MM/yyyy.")
     private String dataNasc;
 	
 	@NotBlank(message = "O email é nascimento é obrigatório.")

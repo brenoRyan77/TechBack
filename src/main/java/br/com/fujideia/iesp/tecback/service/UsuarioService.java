@@ -42,7 +42,6 @@ public class UsuarioService {
 
 	public UsuarioDTO salvar(UsuarioDTO user) throws Exception {
 
-		try {
 			Usuario usuario = new Usuario();
 			String senha = criptografarSenha(user.getSenha());
 
@@ -66,6 +65,9 @@ public class UsuarioService {
 			} else {
 				throw new ApplicationServiceException("Digite um CPF válido");
 			}
+
+			verificarCPF(cpfSemMascara);
+
 			cartao.setNumCartao(cartaoDTO.getNumCartao());
 			cartao.setTitularNome(cartaoDTO.getTitularNome());
 			cartao.setValidadeCartao(cartaoDTO.getValidadeCartao());
@@ -74,13 +76,15 @@ public class UsuarioService {
 			repository.save(usuario);
 
 			enviarEmail(usuario);
-
 			return user;
-		} catch (Exception e) {
-			throw new ApplicationServiceException("message.erro.usuario.salvar");
+
+	}
+    public void verificarCPF(String cpf) throws ApplicationServiceException {
+		Cartao cartao = cartaoRepository.verificarCpf(cpf);
+		if (cartao != null) {
+			throw new ApplicationServiceException("message.erro.cpf.existente");
 		}
 	}
-    
     public void alterar(UsuarioDTO user, Long id) throws ApplicationServiceException {
 
         Optional<Usuario> op = repository.findById(id);
