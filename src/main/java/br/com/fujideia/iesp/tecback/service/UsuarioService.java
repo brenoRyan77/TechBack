@@ -3,6 +3,7 @@ package br.com.fujideia.iesp.tecback.service;
 import java.util.List;
 import java.util.Optional;
 
+import br.com.fujideia.iesp.tecback.exception.ApplicationServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.BeanUtils;
@@ -41,8 +42,9 @@ public class UsuarioService {
 
     public UsuarioDTO salvar(UsuarioDTO user) throws Exception {
 
-        Usuario usuario = new Usuario();
-        String senha = criptografarSenha(user.getSenha());
+        try {
+            Usuario usuario = new Usuario();
+            String senha = criptografarSenha(user.getSenha());
 
         if (StringUtils.isNotBlank(senha)) {
             usuario.setSenha(senha);
@@ -68,14 +70,16 @@ public class UsuarioService {
         cartao.setTitularNome(cartaoDTO.getTitularNome());
         cartao.setValidadeCartao(cartaoDTO.getValidadeCartao());
 
-        usuario.setDadosCartao(cartao);
-
         cartaoRepository.save(cartao);
         repository.save(usuario);
         
         enviarEmail(usuario);
 
-        return user;
+
+            return user;
+        } catch (Exception e) {
+            throw new ApplicationServiceException("message.erro.usuario.salvar");
+        }
     }
     
     public void alterar(UsuarioDTO user, Long id) throws ApplicationServiceException {
