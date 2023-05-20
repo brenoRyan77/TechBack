@@ -1,11 +1,11 @@
 package br.com.fujideia.iesp.tecback.controller;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -19,10 +19,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.fujideia.iesp.tecback.dto.EntityErrorDTO;
 import br.com.fujideia.iesp.tecback.dto.UsuarioDTO;
 import br.com.fujideia.iesp.tecback.entities.Usuario;
+import br.com.fujideia.iesp.tecback.exception.ApplicationServiceException;
 import br.com.fujideia.iesp.tecback.service.UsuarioService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 
 @RestController
 @RequestMapping("/usuario")
@@ -31,54 +35,74 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioService service;
+    
+    @Autowired
+    private Validator validator;
 
     @PostMapping
-    public ResponseEntity<?> salvar(@RequestBody @Validated UsuarioDTO user,
-    		BindingResult bindingResult) throws Exception {
+    public ResponseEntity<?> salvar(@RequestBody @Validated UsuarioDTO user) 
+    		throws Exception {
 
-		if (bindingResult.hasErrors()) {
-            List<String> errors = bindingResult.getFieldErrors()
-                    .stream()
-                    .map(DefaultMessageSourceResolvable::getDefaultMessage)
-                    .collect(Collectors.toList());
-
-            return ResponseEntity.badRequest().body(errors);
+    	Set<ConstraintViolation<UsuarioDTO>> violationSet = validator.validate(user);
+    	
+    	if (!violationSet.isEmpty()) {
+            EntityErrorDTO entityErrorDTO = 
+            		EntityErrorDTO.createFromValidation(violationSet);
+            return entityErrorDTO.withStatusCode(HttpStatus.UNPROCESSABLE_ENTITY);
+            
         }
-        UsuarioDTO usuario = service.salvar(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(usuario);
+    	try {
+			service.salvar(user);
+			return ResponseEntity.noContent().build();
+		} catch (ApplicationServiceException e) {
+			return EntityErrorDTO.createFromException(e.getMessage())
+					.withStatusCode(HttpStatus.BAD_REQUEST);
+		}
     }
     
     @PutMapping("/{id}")
     public ResponseEntity<?> alterar(@PathVariable("id") Long id,
     		@RequestBody UsuarioDTO user, BindingResult bindingResult) throws Exception {
     	
-    	if (bindingResult.hasErrors()) {
-            List<String> errors = bindingResult.getFieldErrors()
-                    .stream()
-                    .map(DefaultMessageSourceResolvable::getDefaultMessage)
-                    .collect(Collectors.toList());
-
-            return ResponseEntity.badRequest().body(errors);
+    	Set<ConstraintViolation<UsuarioDTO>> violationSet = validator.validate(user);
+    	
+    	if (!violationSet.isEmpty()) {
+            EntityErrorDTO entityErrorDTO = 
+            		EntityErrorDTO.createFromValidation(violationSet);
+            return entityErrorDTO.withStatusCode(HttpStatus.UNPROCESSABLE_ENTITY);
+            
         }
-        service.alterar(user, id);
-        return ResponseEntity.ok().build();
+        try {
+			service.alterar(user, id);
+			return ResponseEntity.noContent().build();
+		} catch (ApplicationServiceException e) {
+			return EntityErrorDTO.createFromException(e.getMessage())
+					.withStatusCode(HttpStatus.BAD_REQUEST);
+		}
     }
+    
     @GetMapping
     public ResponseEntity<List<Usuario>> listar() {
         return ResponseEntity.ok(service.listar());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Usuario> consultar (@PathVariable("id") Long id) throws ChangeSetPersister.NotFoundException {
+    public ResponseEntity<Usuario> consultar (@PathVariable("id") Long id) 
+    		throws ApplicationServiceException {
+    	
         return ResponseEntity.ok(service.consultarPorId(id));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Boolean> excluir (@PathVariable("id") Long id) {
-        if (service.excluir(id)) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<?> excluir (@PathVariable("id") Long id) {
+    	 
+    	try {
+         	service.excluir(id);
+         	return ResponseEntity.noContent().build();
+         }catch (ApplicationServiceException e) {
+         	return EntityErrorDTO.createFromException(e.getMessage())
+ 					.withStatusCode(HttpStatus.BAD_REQUEST);
+ 		}
+    	
     }
 }

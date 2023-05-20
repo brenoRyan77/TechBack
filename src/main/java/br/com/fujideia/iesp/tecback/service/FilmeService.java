@@ -30,14 +30,11 @@ public class FilmeService {
             Filme filme = new Filme();
 
             Genero genero = new Genero();
-            GeneroDTO generoDTO = filmeDTO.getGenero();
-            genero.setDescircao(generoDTO.getDescricao());
+            genero.setId(filmeDTO.getIdGenero());
 
             filme.setGenero(genero);
             filme.setSinopse(filmeDTO.getSinopse());
             filme.setTitulo(filmeDTO.getTitulo());
-
-            generoRepository.save(genero);
 
             repository.save(filme);
 
@@ -60,8 +57,7 @@ public class FilmeService {
 			filme.setSinopse(filmeDTO.getSinopse());
 			filme.setTitulo(filmeDTO.getTitulo());
 
-			GeneroDTO generoDTO = filmeDTO.getGenero();
-			genero.setDescircao(generoDTO.getDescricao());
+			genero.setId(filmeDTO.getIdGenero());
 
 			filme.setGenero(genero);
 

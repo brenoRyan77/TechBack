@@ -15,12 +15,13 @@ public class Filme implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
 	@Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 	
+	@Column(name = "titulo")
     private String titulo;
     
-    @Column(name = "ds_sinopse", length = 500)
+    @Column(name = "sinopse", length = 500)
     private String sinopse;
     
     @ManyToOne
