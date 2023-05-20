@@ -42,41 +42,41 @@ public class UsuarioService {
 
 	public UsuarioDTO salvar(UsuarioDTO user) throws Exception {
 
-			Usuario usuario = new Usuario();
-			String senha = criptografarSenha(user.getSenha());
+		Usuario usuario = new Usuario();
+		String senha = criptografarSenha(user.getSenha());
 
-			if (StringUtils.isNotBlank(senha)) {
-				usuario.setSenha(senha);
-			}
-			usuario.setNomeCompleto(user.getNomeCompleto());
-			usuario.setEmail(user.getEmail());
-			usuario.setDataNasc(user.getDataNasc());
+		if (StringUtils.isNotBlank(senha)) {
+			usuario.setSenha(senha);
+		}
+		usuario.setNomeCompleto(user.getNomeCompleto());
+		usuario.setEmail(user.getEmail());
+		usuario.setDataNasc(user.getDataNasc());
 
-			CartaoDTO cartaoDTO = user.getCartao();
+		CartaoDTO cartaoDTO = user.getCartao();
 
-			Cartao cartao = new Cartao();
-			cartao.setCodSeguranca(cartaoDTO.getCodSeguranca());
+		Cartao cartao = new Cartao();
+		cartao.setCodSeguranca(cartaoDTO.getCodSeguranca());
 
-			String cpfSemMascara = UtilidadesDesenvolvimento.retiraCpf(cartaoDTO.getCpf());
-			boolean cpfValido = CpfRgUtil.validaCPF(cpfSemMascara);
+		String cpfSemMascara = UtilidadesDesenvolvimento.retiraCpf(cartaoDTO.getCpf());
+		boolean cpfValido = CpfRgUtil.validaCPF(cpfSemMascara);
 
-			if (cpfValido) {
-				cartao.setCpf(cpfSemMascara);
-			} else {
-				throw new ApplicationServiceException("Digite um CPF válido");
-			}
+		if (cpfValido) {
+			cartao.setCpf(cpfSemMascara);
+		} else {
+			throw new ApplicationServiceException("Digite um CPF válido");
+		}
 
-			verificarCPF(cpfSemMascara);
+		verificarCPF(cpfSemMascara);
 
-			cartao.setNumCartao(cartaoDTO.getNumCartao());
-			cartao.setTitularNome(cartaoDTO.getTitularNome());
-			cartao.setValidadeCartao(cartaoDTO.getValidadeCartao());
+		cartao.setNumCartao(cartaoDTO.getNumCartao());
+		cartao.setTitularNome(cartaoDTO.getTitularNome());
+		cartao.setValidadeCartao(cartaoDTO.getValidadeCartao());
 
-			cartaoRepository.save(cartao);
-			repository.save(usuario);
+		cartaoRepository.save(cartao);
+		repository.save(usuario);
 
-			enviarEmail(usuario);
-			return user;
+		enviarEmail(usuario);
+		return user;
 
 	}
     public void verificarCPF(String cpf) throws ApplicationServiceException {
