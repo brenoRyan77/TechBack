@@ -13,6 +13,8 @@ public class UsuarioDTO {
     private String dataNasc;
 	@NotBlank(message = "O email é nascimento é obrigatório.")
     private String email;
+	@NotBlank(message = "O Login é obrigatório.")
+	private String login;
 	@NotBlank(message = "A senha é obrigatório.")
     private String senha;
 	@Valid

@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
 
@@ -24,11 +25,15 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class UsuarioService {
 
-    @Autowired
-    private UsuarioRepository repository;
+	private final UsuarioRepository usuarioRepository;
     
     @Autowired
     private CartaoRepository cartaoRepository;
+    
+    @Autowired
+    public UsuarioService(@Qualifier("usuarioRepository") UsuarioRepository usuarioRepository) {
+        this.usuarioRepository = usuarioRepository;
+    }
 
     public UsuarioDTO salvar(UsuarioDTO user) throws Exception {
 
@@ -41,6 +46,7 @@ public class UsuarioService {
         usuario.setNomeCompleto(user.getNomeCompleto());
         usuario.setEmail(user.getEmail());
         usuario.setDataNasc(user.getDataNasc());
+        usuario.setLogin(user.getLogin());
 
         CartaoDTO cartaoDTO = user.getCartao();
 
@@ -62,13 +68,13 @@ public class UsuarioService {
         usuario.setDadosCartao(cartao);
 
         cartaoRepository.save(cartao);
-        repository.save(usuario);
+        usuarioRepository.save(usuario);
 
         return user;
     }
     public void alterar(UsuarioDTO user, Long id) throws Exception {
 
-        Optional<Usuario> op = repository.findById(id);
+        Optional<Usuario> op = usuarioRepository.findById(id);
         String senha = criptografarSenha(user.getSenha());
 
         if(!op.isEmpty()){
@@ -77,7 +83,7 @@ public class UsuarioService {
             usuario.setNomeCompleto(user.getNomeCompleto());
             usuario.setEmail(user.getEmail());
             usuario.setSenha(senha);
-            repository.save(usuario);
+            usuarioRepository.save(usuario);
 
         }else{
             throw new MethodNotFoundException();
@@ -85,14 +91,14 @@ public class UsuarioService {
 
     }
     public List<Usuario> listar() {
-        return repository.findAll();
+        return usuarioRepository.findAll();
     }
     public Boolean excluir(Long id){
 
         try {
-            Optional<Usuario> op = repository.findById(id);
+            Optional<Usuario> op = usuarioRepository.findById(id);
             if(!op.isEmpty()){
-                repository.deleteById(id);
+            	usuarioRepository.deleteById(id);
             }
         }catch (Exception e){
             log.info("Erro ao realizar exclusao", e.getMessage());
@@ -101,7 +107,7 @@ public class UsuarioService {
         return true;
     }
     public Usuario consultarPorId(Long id) throws ChangeSetPersister.NotFoundException {
-        return repository.findById(id).orElseThrow(ChangeSetPersister.NotFoundException::new);
+        return usuarioRepository.findById(id).orElseThrow(ChangeSetPersister.NotFoundException::new);
     }
 
     public String criptografarSenha(String senha){

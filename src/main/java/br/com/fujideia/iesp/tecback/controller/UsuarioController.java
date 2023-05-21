@@ -8,6 +8,9 @@ import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,8 +22,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.fujideia.iesp.tecback.dto.Login;
 import br.com.fujideia.iesp.tecback.dto.UsuarioDTO;
 import br.com.fujideia.iesp.tecback.entities.Usuario;
+import br.com.fujideia.iesp.tecback.service.TokenService;
 import br.com.fujideia.iesp.tecback.service.UsuarioService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -31,6 +36,13 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioService service;
+    
+    @Autowired
+    private AuthenticationManager authenticationManager;
+    
+    @Autowired
+    private TokenService tokenService;
+    
 
     @PostMapping
     public ResponseEntity<?> salvar(@RequestBody @Validated UsuarioDTO user,
@@ -81,4 +93,19 @@ public class UsuarioController {
             return ResponseEntity.notFound().build();
         }
     }
+    
+    @PostMapping("/login")
+    public String login(@RequestBody Login login) {
+   
+    	UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+    			new UsernamePasswordAuthenticationToken(login.login(), login.password());
+    	
+    	Authentication authenticate = this.authenticationManager
+    			.authenticate(usernamePasswordAuthenticationToken);
+    	
+    	var usuario = (Usuario) authenticate.getPrincipal();
+    	
+    	return tokenService.gerarToken(usuario);
+    }
+    
 }
