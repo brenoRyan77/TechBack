@@ -3,17 +3,13 @@ package br.com.fujideia.iesp.tecback.service;
 import java.util.List;
 import java.util.Optional;
 
-import br.com.fujideia.iesp.tecback.exception.ApplicationServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.mindrot.jbcrypt.BCrypt;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import br.com.fujideia.iesp.tecback.consumer.EmailConsumer;
 import br.com.fujideia.iesp.tecback.dto.CartaoDTO;
-import br.com.fujideia.iesp.tecback.dto.EmailDTO;
 import br.com.fujideia.iesp.tecback.dto.UsuarioDTO;
 import br.com.fujideia.iesp.tecback.entities.Cartao;
 import br.com.fujideia.iesp.tecback.entities.Email;
@@ -36,7 +32,7 @@ public class UsuarioService {
     private CartaoRepository cartaoRepository;
     
    @Autowired
-   EmailConsumer emailConsumer;
+   EmailService emailService;
     
     @Value("${spring.mail.username}")
     private String emailDefault;
@@ -144,7 +140,7 @@ public class UsuarioService {
 
 		try {
 
-			EmailDTO emailDTO = new EmailDTO();
+			Email emailModel = new Email();
 			
 			StringBuilder corpoEmail = new StringBuilder();
 
@@ -158,13 +154,13 @@ public class UsuarioService {
 			corpoEmail.append("Atenciosamente,\n");
 			corpoEmail.append("Equipe TeckBack.");
 
-			emailDTO.setSubject("Cadastro TeckBack - UNIESP");
-			emailDTO.setEmailTo(user.getEmail());
-			emailDTO.setEmailFrom(emailDefault);
-			emailDTO.setOwnerRef(user.getId().toString() + " - " + user.getNomeCompleto());
-			emailDTO.setText(corpoEmail.toString());
+			emailModel.setSubject("Cadastro TeckBack - UNIESP");
+			emailModel.setEmailTo(user.getEmail());
+			emailModel.setEmailFrom(emailDefault);
+			emailModel.setOwnerRef(user.getId().toString() + " - " + user.getNomeCompleto());
+			emailModel.setText(corpoEmail.toString());
 
-			emailConsumer.listen(emailDTO);
+			emailService.sendEmail(emailModel);
 
 		} catch (Exception e) {
 			throw new ApplicationServiceException("message.erro.envio.email");
