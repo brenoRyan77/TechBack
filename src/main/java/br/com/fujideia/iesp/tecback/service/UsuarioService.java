@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import br.com.fujideia.iesp.tecback.consumer.EmailConsumer;
 import br.com.fujideia.iesp.tecback.dto.CartaoDTO;
 import br.com.fujideia.iesp.tecback.dto.EmailDTO;
 import br.com.fujideia.iesp.tecback.dto.UsuarioDTO;
@@ -34,8 +35,8 @@ public class UsuarioService {
     @Autowired
     private CartaoRepository cartaoRepository;
     
-    @Autowired
-    EmailService emailService;
+   @Autowired
+   EmailConsumer emailConsumer;
     
     @Value("${spring.mail.username}")
     private String emailDefault;
@@ -63,7 +64,7 @@ public class UsuarioService {
 		if (cpfValido) {
 			cartao.setCpf(cpfSemMascara);
 		} else {
-			throw new ApplicationServiceException("Digite um CPF válido");
+			throw new ApplicationServiceException("message.erro.cpf.invalido");
 		}
 
 		verificarCPF(cpfSemMascara);
@@ -71,7 +72,9 @@ public class UsuarioService {
 		cartao.setNumCartao(cartaoDTO.getNumCartao());
 		cartao.setTitularNome(cartaoDTO.getTitularNome());
 		cartao.setValidadeCartao(cartaoDTO.getValidadeCartao());
-
+		
+		usuario.setDadosCartao(cartao);
+		
 		cartaoRepository.save(cartao);
 		repository.save(usuario);
 
@@ -142,10 +145,8 @@ public class UsuarioService {
 		try {
 
 			EmailDTO emailDTO = new EmailDTO();
+			
 			StringBuilder corpoEmail = new StringBuilder();
-
-			Email emailModel = new Email();
-			BeanUtils.copyProperties(emailDTO, emailModel);
 
 			corpoEmail.append("Prezado(a) ").append(user.getNomeCompleto()).append(",\n\n");
 			corpoEmail.append("Gostaríamos de informar que seu cadastro foi"
@@ -157,13 +158,13 @@ public class UsuarioService {
 			corpoEmail.append("Atenciosamente,\n");
 			corpoEmail.append("Equipe TeckBack.");
 
-			emailModel.setSubject("Cadastro TeckBack - UNIESP");
-			emailModel.setEmailTo(user.getEmail());
-			emailModel.setEmailFrom(emailDefault);
-			emailModel.setOwnerRef(user.getId().toString() + " - " + user.getNomeCompleto());
-			emailModel.setText(corpoEmail.toString());
+			emailDTO.setSubject("Cadastro TeckBack - UNIESP");
+			emailDTO.setEmailTo(user.getEmail());
+			emailDTO.setEmailFrom(emailDefault);
+			emailDTO.setOwnerRef(user.getId().toString() + " - " + user.getNomeCompleto());
+			emailDTO.setText(corpoEmail.toString());
 
-			emailService.sendEmail(emailModel);
+			emailConsumer.listen(emailDTO);
 
 		} catch (Exception e) {
 			throw new ApplicationServiceException("message.erro.envio.email");

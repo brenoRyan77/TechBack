@@ -17,6 +17,6 @@ public class CartaoDTO {
 	@NotBlank(message = "Nome do titular do cartão é obrigatório.")
 	private String titularNome;
 	@NotBlank(message = "CPF do titular do cartão é obrigatório.")
-	@Size(max = 11, message = "O tamanho máximo do CPF é de 11 dígitos.")
+	@Size(max = 14, message = "O tamanho máximo do CPF é de 11 dígitos.")
 	private String cpf;
 }
