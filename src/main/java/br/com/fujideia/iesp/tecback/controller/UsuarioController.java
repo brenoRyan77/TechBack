@@ -2,16 +2,11 @@ package br.com.fujideia.iesp.tecback.controller;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import br.com.fujideia.iesp.tecback.dto.EntityErrorDTO;
-import br.com.fujideia.iesp.tecback.exception.ApplicationServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +24,7 @@ import br.com.fujideia.iesp.tecback.service.UsuarioService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import jakarta.validation.constraints.NotNull;
 
 @RestController
 @RequestMapping("/usuario")
@@ -42,15 +38,16 @@ public class UsuarioController {
     private Validator validator;
 
     @PostMapping
-    public ResponseEntity<?> salvar(@RequestBody @Validated UsuarioDTO user) 
+    public ResponseEntity<?> salvar(@RequestBody @NotNull UsuarioDTO user) 
     		throws Exception {
 
     	Set<ConstraintViolation<UsuarioDTO>> violationSet = validator.validate(user);
     	
     	if (!violationSet.isEmpty()) {
-            EntityErrorDTO entityErrorDTO = 
-            		EntityErrorDTO.createFromValidation(violationSet);
-            return entityErrorDTO.withStatusCode(HttpStatus.UNPROCESSABLE_ENTITY);
+    		EntityErrorDTO entityErrorDTO =  EntityErrorDTO
+    				.createFromValidation(violationSet);
+    		return entityErrorDTO
+					.withStatusCode(HttpStatus.UNPROCESSABLE_ENTITY);
             
         }
     	try {
@@ -64,14 +61,16 @@ public class UsuarioController {
     
     @PutMapping("/{id}")
     public ResponseEntity<?> alterar(@PathVariable("id") Long id,
-    		@RequestBody UsuarioDTO user, BindingResult bindingResult) throws Exception {
+    		@RequestBody @NotNull UsuarioDTO user, BindingResult bindingResult) 
+    				throws ApplicationServiceException {
     	
     	Set<ConstraintViolation<UsuarioDTO>> violationSet = validator.validate(user);
     	
     	if (!violationSet.isEmpty()) {
-            EntityErrorDTO entityErrorDTO = 
-            		EntityErrorDTO.createFromValidation(violationSet);
-            return entityErrorDTO.withStatusCode(HttpStatus.UNPROCESSABLE_ENTITY);
+    		EntityErrorDTO entityErrorDTO =  EntityErrorDTO
+    				.createFromValidation(violationSet);
+    		return entityErrorDTO
+					.withStatusCode(HttpStatus.UNPROCESSABLE_ENTITY);
             
         }
         try {

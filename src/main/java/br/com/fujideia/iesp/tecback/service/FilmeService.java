@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import br.com.fujideia.iesp.tecback.dto.FilmeDTO;
-import br.com.fujideia.iesp.tecback.dto.GeneroDTO;
 import br.com.fujideia.iesp.tecback.entities.Filme;
 import br.com.fujideia.iesp.tecback.entities.Genero;
 import br.com.fujideia.iesp.tecback.exception.ApplicationServiceException;

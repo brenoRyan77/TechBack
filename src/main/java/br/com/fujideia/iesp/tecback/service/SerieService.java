@@ -34,7 +34,7 @@ public class SerieService {
 			serie.setSinopse(serieDTO.getSinopse());
 			serie.setTitulo(serieDTO.getTitulo());
 			serie.setTemporada(serieDTO.getTemporada());
-			serie.setEpisodio(serieDTO.getEpisódio());
+			serie.setEpisodio(serieDTO.getEpisodio());
 			serie.setClassificacaoIndicativa(serieDTO.getClassificacaoIndicativa());
 
 			repository.save(serie);
@@ -56,7 +56,7 @@ public class SerieService {
 
 			serie.setSinopse(serieDTO.getSinopse());
 			serie.setTitulo(serieDTO.getTitulo());
-			serie.setEpisodio(serieDTO.getEpisódio());
+			serie.setEpisodio(serieDTO.getEpisodio());
 			serie.setClassificacaoIndicativa(serieDTO.getClassificacaoIndicativa());
 			serie.setTemporada(serieDTO.getTemporada());
 

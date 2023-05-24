@@ -6,6 +6,7 @@ import lombok.Data;
 
 @Data
 public class SerieDTO {
+	
 	@NotBlank(message = "O título da série é obrigatório.")
 	private String titulo;
 
@@ -13,7 +14,7 @@ public class SerieDTO {
 	private String temporada;
 
 	@NotBlank(message = "O número do episódio é obrigatório.")
-	private String episódio;
+	private String episodio;
 
 	@NotBlank(message = "A sinopse é obrigatório.")
 	private String sinopse;

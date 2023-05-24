@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,9 +43,10 @@ public class EntityErrorDTO {
 	}
 
 	public static <T> EntityErrorDTO createFromValidation(Set<ConstraintViolation<T>> violations) {
+		
 		List<EntityFieldErroDTO> errors = violations.stream().map(
 				violation -> new EntityFieldErroDTO(violation.getPropertyPath().toString(), violation.getMessage()))
-				.collect(Collectors.toList());
+				.toList();
 
 		String message;
 		if (errors.isEmpty()) {
