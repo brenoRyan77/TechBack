@@ -8,17 +8,19 @@ import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.crossstore.ChangeSetPersister;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import br.com.fujideia.iesp.tecback.dto.CartaoDTO;
 import br.com.fujideia.iesp.tecback.dto.UsuarioDTO;
 import br.com.fujideia.iesp.tecback.entities.Cartao;
+import br.com.fujideia.iesp.tecback.entities.Email;
 import br.com.fujideia.iesp.tecback.entities.Usuario;
+import br.com.fujideia.iesp.tecback.exception.ApplicationServiceException;
 import br.com.fujideia.iesp.tecback.repository.CartaoRepository;
 import br.com.fujideia.iesp.tecback.repository.UsuarioRepository;
 import br.com.fujideia.iesp.tecback.util.CpfRgUtil;
 import br.com.fujideia.iesp.tecback.util.UtilidadesDesenvolvimento;
-import jakarta.el.MethodNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -34,11 +36,16 @@ public class UsuarioService {
     public UsuarioService(@Qualifier("usuarioRepository") UsuarioRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;
     }
+   @Autowired
+   EmailService emailService;
+    
+    @Value("${spring.mail.username}")
+    private String emailDefault;
 
-    public UsuarioDTO salvar(UsuarioDTO user) throws Exception {
+	public UsuarioDTO salvar(UsuarioDTO user) throws Exception {
 
-        Usuario usuario = new Usuario();
-        String senha = criptografarSenha(user.getSenha());
+		Usuario usuario = new Usuario();
+		String senha = criptografarSenha(user.getSenha());
 
         if (StringUtils.isNotBlank(senha)) {
             usuario.setSenha(senha);
@@ -48,31 +55,41 @@ public class UsuarioService {
         usuario.setDataNasc(user.getDataNasc());
         usuario.setLogin(user.getLogin());
 
-        CartaoDTO cartaoDTO = user.getCartao();
+		CartaoDTO cartaoDTO = user.getCartao();
 
-        Cartao cartao = new Cartao();
-        cartao.setCodSeguranca(cartaoDTO.getCodSeguranca());
-        
-        String cpfSemMascara = UtilidadesDesenvolvimento.retiraCpf(cartaoDTO.getCpf());
-        boolean cpfValido = CpfRgUtil.validaCPF(cpfSemMascara);
-        
-        if(cpfValido) {
-        	cartao.setCpf(cpfSemMascara);
-        }else {
-        	throw new IllegalArgumentException("Digite um CPF válido");
-        }
-        cartao.setNumCartao(cartaoDTO.getNumCartao());
-        cartao.setTitularNome(cartaoDTO.getTitularNome());
-        cartao.setValidadeCartao(cartaoDTO.getValidadeCartao());
+		Cartao cartao = new Cartao();
+		cartao.setCodSeguranca(cartaoDTO.getCodSeguranca());
 
-        usuario.setDadosCartao(cartao);
+		String cpfSemMascara = UtilidadesDesenvolvimento.retiraCpf(cartaoDTO.getCpf());
 
-        cartaoRepository.save(cartao);
-        usuarioRepository.save(usuario);
+		if (CpfRgUtil.validaCPF(cpfSemMascara)) {
+			cartao.setCpf(cpfSemMascara);
+		} else {
+			throw new ApplicationServiceException("message.erro.cpf.invalido");
+		}
 
-        return user;
-    }
-    public void alterar(UsuarioDTO user, Long id) throws Exception {
+		verificarCPF(cpfSemMascara);
+
+		cartao.setNumCartao(cartaoDTO.getNumCartao());
+		cartao.setTitularNome(cartaoDTO.getTitularNome());
+		cartao.setValidadeCartao(cartaoDTO.getValidadeCartao());
+		
+		usuario.setDadosCartao(cartao);
+		
+		cartaoRepository.save(cartao);
+		repository.save(usuario);
+
+		enviarEmail(usuario);
+		return user;
+
+	}
+    public void verificarCPF(String cpf) throws ApplicationServiceException {
+		Cartao cartao = cartaoRepository.verificarCpf(cpf);
+		if (cartao != null) {
+			throw new ApplicationServiceException("message.erro.cpf.existente");
+		}
+	}
+    public void alterar(UsuarioDTO user, Long id) throws ApplicationServiceException {
 
         Optional<Usuario> op = usuarioRepository.findById(id);
         String senha = criptografarSenha(user.getSenha());
@@ -86,28 +103,36 @@ public class UsuarioService {
             usuarioRepository.save(usuario);
 
         }else{
-            throw new MethodNotFoundException();
+            throw new ApplicationServiceException("message.erro.user.not.found");
         }
 
     }
+    
     public List<Usuario> listar() {
         return usuarioRepository.findAll();
     }
-    public Boolean excluir(Long id){
+    
+    public void excluir(Long id) throws ApplicationServiceException{
 
-        try {
-            Optional<Usuario> op = usuarioRepository.findById(id);
-            if(!op.isEmpty()){
-            	usuarioRepository.deleteById(id);
-            }
-        }catch (Exception e){
-            log.info("Erro ao realizar exclusao", e.getMessage());
-            return false;
-        }
-        return true;
+    	Optional<Usuario> usuario = repository.findById(id);
+    	
+    	if(!usuario.isEmpty()) {
+    		repository.deleteById(usuario.get().getId());
+    	}else {
+    		throw new ApplicationServiceException("message.erro.user.not.found");
+    	}
     }
-    public Usuario consultarPorId(Long id) throws ChangeSetPersister.NotFoundException {
-        return usuarioRepository.findById(id).orElseThrow(ChangeSetPersister.NotFoundException::new);
+    
+    public Usuario consultarPorId(Long id) throws ApplicationServiceException  {
+        
+    	Usuario user = repository.findById(id).get();
+    	
+    	if(user != null) {
+    		return user;
+    		
+    	}else {
+    		throw new ApplicationServiceException("message.erro.user.not.found");
+    	}
     }
 
     public String criptografarSenha(String senha){
@@ -115,4 +140,35 @@ public class UsuarioService {
         return BCrypt.hashpw(senha, BCrypt.gensalt());
 
     }
+    
+	public void enviarEmail(Usuario user) throws ApplicationServiceException {
+
+		try {
+
+			Email emailModel = new Email();
+			
+			StringBuilder corpoEmail = new StringBuilder();
+
+			corpoEmail.append("Prezado(a) ").append(user.getNomeCompleto()).append(",\n\n");
+			corpoEmail.append("Gostaríamos de informar que seu cadastro foi"
+					+ " realizado com sucesso. É um prazer tê-lo(a) como parte de nossa comunidade.\n\n");
+			corpoEmail.append("Em caso de dúvidas ou necessidade de suporte,"
+					+ " não hesite em entrar em contato conosco. Estamos sempre prontos para ajudar.\n\n");
+			corpoEmail.append("Agradecemos por escolher nossos serviços e"
+					+ " esperamos proporcionar uma experiência satisfatória" + " em todas as interações.\n\n");
+			corpoEmail.append("Atenciosamente,\n");
+			corpoEmail.append("Equipe TeckBack.");
+
+			emailModel.setSubject("Cadastro TeckBack - UNIESP");
+			emailModel.setEmailTo(user.getEmail());
+			emailModel.setEmailFrom(emailDefault);
+			emailModel.setOwnerRef(user.getId().toString() + " - " + user.getNomeCompleto());
+			emailModel.setText(corpoEmail.toString());
+
+			emailService.sendEmail(emailModel);
+
+		} catch (Exception e) {
+			throw new ApplicationServiceException("message.erro.envio.email");
+		}
+	}
 }

@@ -16,11 +16,19 @@ public class Cartao {
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+	
 	@Column(name = "nrCartao", length = 16)
 	private String numCartao;
+	
+	@Column(name = "validadeCartao")
 	private String validadeCartao;
+	
+	@Column(name = "codSeguranca")
 	private String codSeguranca;
+	
+	@Column(name = "titularNome")
 	private String titularNome;
+	
 	@Column(name = "nrCpf", length = 11)
 	private String cpf;
 }
