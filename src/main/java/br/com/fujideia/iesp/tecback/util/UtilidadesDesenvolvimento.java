@@ -43,7 +43,8 @@ public class UtilidadesDesenvolvimento {
     public static String retiraCpf(String cpf) throws Exception {
 
         try{
-            return cpf.replaceAll("[.\\-]", "");
+            String cpfFormatado = cpf.replaceAll("[.\\-]", "");
+            return cpfFormatado;
         }catch (Exception e){
             throw new Exception(MessageErro.ERRO_AO_FORMATAR_CPF +"\n" +e.getMessage());
         }

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import br.com.fujideia.iesp.tecback.dto.FilmeDTO;
+import br.com.fujideia.iesp.tecback.dto.GeneroDTO;
 import br.com.fujideia.iesp.tecback.entities.Filme;
 import br.com.fujideia.iesp.tecback.entities.Genero;
 import br.com.fujideia.iesp.tecback.exception.ApplicationServiceException;
@@ -24,16 +25,19 @@ public class FilmeService {
     private GeneroRepository generoRepository;
 
     public void salvar(FilmeDTO filmeDTO) throws ApplicationServiceException{
-
+    	
     	try {
             Filme filme = new Filme();
 
             Genero genero = new Genero();
-            genero.setId(filmeDTO.getIdGenero());
+            GeneroDTO generoDTO = filmeDTO.getGenero();
+            genero.setDescircao(generoDTO.getDescricao());
 
             filme.setGenero(genero);
             filme.setSinopse(filmeDTO.getSinopse());
             filme.setTitulo(filmeDTO.getTitulo());
+
+            generoRepository.save(genero);
 
             repository.save(filme);
 
@@ -56,7 +60,8 @@ public class FilmeService {
 			filme.setSinopse(filmeDTO.getSinopse());
 			filme.setTitulo(filmeDTO.getTitulo());
 
-			genero.setId(filmeDTO.getIdGenero());
+			GeneroDTO generoDTO = filmeDTO.getGenero();
+			genero.setDescircao(generoDTO.getDescricao());
 
 			filme.setGenero(genero);
 
