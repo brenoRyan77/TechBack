@@ -23,6 +23,11 @@ public class UsuarioDTO {
 	@Email(message = "Digite um email válido.")
     private String email;
 	
+	@NotBlank(message = "O login é obrigatório.")
+	@Size(min = 3, max = 100, message = "O nome precisa ter entre 3 a 100 caracteres.")
+	@Pattern(regexp = "^[A-Za-z\\s]+$", message = "O campo 'nome' deve conter apenas letras e espaços")
+	private String login;
+	
 	//@NotBlank(message = "A senha é obrigatório.")
 	@Size(min = 3, max = 100, message = "A senha precisa ter no mínimo 3 dígitos.")
     private String senha;

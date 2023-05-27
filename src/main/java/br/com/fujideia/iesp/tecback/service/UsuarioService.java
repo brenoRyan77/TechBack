@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -25,15 +26,20 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class UsuarioService {
 
+
+	private UsuarioRepository repository;
+
+	@Autowired
+	private CartaoRepository cartaoRepository;
+
+	@Autowired
+	EmailService emailService;
+	
     @Autowired
-    private UsuarioRepository repository;
-    
-    @Autowired
-    private CartaoRepository cartaoRepository;
-    
-   @Autowired
-   EmailService emailService;
-    
+    public UsuarioService(@Qualifier("usuarioRepository") UsuarioRepository usuarioRepository) {
+        this.repository = usuarioRepository;
+    }
+
     @Value("${spring.mail.username}")
     private String emailDefault;
 
@@ -48,6 +54,7 @@ public class UsuarioService {
 		usuario.setNomeCompleto(user.getNomeCompleto());
 		usuario.setEmail(user.getEmail());
 		usuario.setDataNasc(user.getDataNasc());
+		usuario.setLogin(user.getLogin());
 
 		CartaoDTO cartaoDTO = user.getCartao();
 
@@ -55,9 +62,8 @@ public class UsuarioService {
 		cartao.setCodSeguranca(cartaoDTO.getCodSeguranca());
 
 		String cpfSemMascara = UtilidadesDesenvolvimento.retiraCpf(cartaoDTO.getCpf());
-		boolean cpfValido = CpfRgUtil.validaCPF(cpfSemMascara);
 
-		if (cpfValido) {
+		if (CpfRgUtil.validaCPF(cpfSemMascara)) {
 			cartao.setCpf(cpfSemMascara);
 		} else {
 			throw new ApplicationServiceException("message.erro.cpf.invalido");
@@ -74,7 +80,7 @@ public class UsuarioService {
 		cartaoRepository.save(cartao);
 		repository.save(usuario);
 
-		enviarEmail(usuario);
+		//enviarEmail(usuario);
 		return user;
 
 	}
