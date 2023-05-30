@@ -122,7 +122,6 @@ public class UsuarioController {
     @PostMapping("/login")
     public String login(@RequestBody Login login) {
     	
-    	System.out.println("Entrou aqui");
 
     	UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
     			new UsernamePasswordAuthenticationToken(login.login(), login.password());
