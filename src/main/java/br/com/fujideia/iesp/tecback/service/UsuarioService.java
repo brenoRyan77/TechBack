@@ -1,5 +1,6 @@
 package br.com.fujideia.iesp.tecback.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,7 +12,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import br.com.fujideia.iesp.tecback.dto.CartaoDTO;
+import br.com.fujideia.iesp.tecback.dto.CartaoDTOView;
 import br.com.fujideia.iesp.tecback.dto.UsuarioDTO;
+import br.com.fujideia.iesp.tecback.dto.UsuarioDTOView;
 import br.com.fujideia.iesp.tecback.entities.Cartao;
 import br.com.fujideia.iesp.tecback.entities.Email;
 import br.com.fujideia.iesp.tecback.entities.Usuario;
@@ -27,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 public class UsuarioService {
 
 
-	private UsuarioRepository repository;
+	private UsuarioRepository usuarioRepository;
 
 	@Autowired
 	private CartaoRepository cartaoRepository;
@@ -37,7 +40,7 @@ public class UsuarioService {
 	
     @Autowired
     public UsuarioService(@Qualifier("usuarioRepository") UsuarioRepository usuarioRepository) {
-        this.repository = usuarioRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @Value("${spring.mail.username}")
@@ -78,7 +81,7 @@ public class UsuarioService {
 		usuario.setDadosCartao(cartao);
 		
 		cartaoRepository.save(cartao);
-		repository.save(usuario);
+		usuarioRepository.save(usuario);
 
 		//enviarEmail(usuario);
 		return user;
@@ -92,7 +95,7 @@ public class UsuarioService {
 	}
     public void alterar(UsuarioDTO user, Long id) throws ApplicationServiceException {
 
-        Optional<Usuario> op = repository.findById(id);
+        Optional<Usuario> op = usuarioRepository.findById(id);
         String senha = criptografarSenha(user.getSenha());
 
         if(!op.isEmpty()){
@@ -101,7 +104,7 @@ public class UsuarioService {
             usuario.setNomeCompleto(user.getNomeCompleto());
             usuario.setEmail(user.getEmail());
             usuario.setSenha(senha);
-            repository.save(usuario);
+            usuarioRepository.save(usuario);
 
         }else{
             throw new ApplicationServiceException("message.erro.user.not.found");
@@ -109,16 +112,43 @@ public class UsuarioService {
 
     }
     
-    public List<Usuario> listar() {
-        return repository.findAll();
+    public List<UsuarioDTOView> listar() {
+    	
+       List<Usuario> user = usuarioRepository.findAll();
+       
+       List<UsuarioDTOView> retorno = new ArrayList<>();
+       
+		for (Usuario usuario : user) {
+
+			UsuarioDTOView userDTO = new UsuarioDTOView();
+			CartaoDTOView cartaoDTO = new CartaoDTOView();
+
+			userDTO.setNomeCompleto(usuario.getNomeCompleto());
+			userDTO.setDataNasc(usuario.getDataNasc());
+			userDTO.setLogin(usuario.getLogin());
+			userDTO.setSenha(usuario.getPassword());
+			userDTO.setEmail(usuario.getEmail());
+
+			cartaoDTO.setCodSeguranca(usuario.getDadosCartao().getCodSeguranca());
+			cartaoDTO.setCpf(usuario.getDadosCartao().getCpf());
+			cartaoDTO.setNumCartao(usuario.getDadosCartao().getNumCartao());
+			cartaoDTO.setTitularNome(usuario.getDadosCartao().getTitularNome());
+			cartaoDTO.setValidadeCartao(usuario.getDadosCartao().getValidadeCartao());
+
+			userDTO.setCartao(cartaoDTO);
+
+			retorno.add(userDTO);
+		}
+		
+		return retorno;
     }
     
     public void excluir(Long id) throws ApplicationServiceException{
 
-    	Optional<Usuario> usuario = repository.findById(id);
+    	Optional<Usuario> usuario = usuarioRepository.findById(id);
     	
     	if(!usuario.isEmpty()) {
-    		repository.deleteById(usuario.get().getId());
+    		usuarioRepository.deleteById(usuario.get().getId());
     	}else {
     		throw new ApplicationServiceException("message.erro.user.not.found");
     	}
@@ -126,7 +156,7 @@ public class UsuarioService {
     
     public Usuario consultarPorId(Long id) throws ApplicationServiceException  {
         
-    	Usuario user = repository.findById(id).get();
+    	Usuario user = usuarioRepository.findById(id).get();
     	
     	if(user != null) {
     		return user;

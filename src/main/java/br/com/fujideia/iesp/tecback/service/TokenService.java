@@ -24,4 +24,10 @@ public class TokenService {
 						).sign(Algorithm.HMAC256("tecback"));
 	}
 
+	public String getSubject(String token) {
+		return JWT.require(Algorithm.HMAC256("tecback"))
+				.withIssuer("Filme")
+				.build().verify(token).getSubject();
+	}
+
 }

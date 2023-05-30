@@ -7,8 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.fujideia.iesp.tecback.dto.EntityErrorDTO;
 import br.com.fujideia.iesp.tecback.dto.Login;
 import br.com.fujideia.iesp.tecback.dto.UsuarioDTO;
+import br.com.fujideia.iesp.tecback.dto.UsuarioDTOView;
 import br.com.fujideia.iesp.tecback.entities.Usuario;
 import br.com.fujideia.iesp.tecback.exception.ApplicationServiceException;
 import br.com.fujideia.iesp.tecback.service.TokenService;
@@ -94,7 +95,7 @@ public class UsuarioController {
     }
     
     @GetMapping
-    public ResponseEntity<List<Usuario>> listar() {
+    public ResponseEntity<List<UsuarioDTOView>> listar() {
         return ResponseEntity.ok(service.listar());
     }
 
@@ -120,15 +121,17 @@ public class UsuarioController {
     
     @PostMapping("/login")
     public String login(@RequestBody Login login) {
-   
+    	
+    	System.out.println("Entrou aqui");
+
     	UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
     			new UsernamePasswordAuthenticationToken(login.login(), login.password());
-    	
+
     	Authentication authenticate = this.authenticationManager
     			.authenticate(usernamePasswordAuthenticationToken);
-    	
+
     	var usuario = (Usuario) authenticate.getPrincipal();
-    	
+
     	return tokenService.gerarToken(usuario);
     }
 }
